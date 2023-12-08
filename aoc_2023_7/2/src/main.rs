@@ -4,7 +4,33 @@ struct Hand {
     bid: u32,
     _type: u32,
 }
-
+impl Hand {
+    fn is_bigger_than(&self,hand2:&Self) -> bool{
+        if self._type > hand2._type{
+            return true;
+        }
+        if self._type < hand2._type{
+            return false;
+        }
+        if self._type == hand2._type{
+            let mut i = 0;
+            while i < 5{
+                let card1 = self.cards[i];
+                let card2 = hand2.cards[i];
+                
+                if card1_bigger(card1,card2){
+                    return true;
+                }
+                if card1 != card2{
+                    return false;
+                }
+                i += 1;
+            }
+            return false;
+        }
+        return false;
+    }
+}
 fn card1_bigger(card1:char,card2:char) -> bool{
     if card1 == 'A' && card2 != 'A'{return true;}
     if card1 != 'A' && card2 == 'A'{return false;}
@@ -23,31 +49,6 @@ fn card1_bigger(card1:char,card2:char) -> bool{
     return false;
 }
 
-fn hand1_bigger(hand1:&Hand,hand2:&Hand) -> bool{
-    if hand1._type > hand2._type{
-        return true;
-    }
-    if hand1._type < hand2._type{
-        return false;
-    }
-    if hand1._type == hand2._type{
-        let mut i = 0;
-        while i < 5{
-            let card1 = hand1.cards[i];
-            let card2 = hand2.cards[i];
-            
-            if card1_bigger(card1,card2){
-                return true;
-            }
-            if card1 != card2{
-                return false;
-            }
-            i += 1;
-        }
-        return false;
-    }
-    return false;
-}
 
 fn get_type(hand: &Vec<char>) -> u32 {
     struct Rep {
@@ -109,32 +110,33 @@ fn get_type(hand: &Vec<char>) -> u32 {
 
 
 fn main() {
-    let mut game_sum = 0;
-    let lines = include_str!("../../input.txt").lines().collect::<Vec<_>>();
+    let mut game_sum: u64 = 0;
+    let lines = include_str!("../../megainput.txt").lines().collect::<Vec<_>>();
     let mut hands: Vec<Hand> = Vec::new();
     for line in &lines {
+        //println!("{}",line);
         let split = line.split(" ").collect::<Vec<_>>();
         let cards = split[0].chars().collect::<Vec<_>>();
         let bid = split[1].parse::<u32>().unwrap();
         let _type = get_type(&cards);
         hands.push(Hand { cards, bid, _type });
     }
-    //Sort hands using hand1_bigger
+    //Sort hands
+    hands.sort_by(|a,b| {
+        if a.is_bigger_than(b) {
+            return std::cmp::Ordering::Greater;
+        } 
+        else if b.is_bigger_than(a) {
+            std::cmp::Ordering::Less
+        } 
+        else {
+            std::cmp::Ordering::Equal
+        }
+    });
     let mut i = 0;
     while i < hands.len(){
-        let mut j = i + 1;
-        while j < hands.len(){
-            if hand1_bigger(&hands[i],&hands[j]){
-                hands.swap(i, j);
-            }
-            j += 1;
-        }
-        i += 1;
-    }
-    i = 0;
-    while i < hands.len(){
-        println!("Rank: {}, Hand: {:?}, bid: {}, type: {}",i+1,hands[i].cards,hands[i].bid,hands[i]._type);
-        game_sum += hands[i].bid * (i+1) as u32;
+        //println!("Rank: {}, Hand: {:?}, bid: {}, type: {}",i+1,hands[i].cards,hands[i].bid,hands[i]._type);
+        game_sum += hands[i].bid as u64 * (i+1) as u64;
         i += 1;
     }
     println!("Game sum: {}",game_sum);
